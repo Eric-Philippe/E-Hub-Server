@@ -14,6 +14,6 @@ data class NonogramLog(
     @Column(nullable = false)
     val started: LocalDateTime,
 
-    @Column(nullable = false)
-    val ended: LocalDateTime
+    @Column(nullable = true)
+    val ended: LocalDateTime?
 )

@@ -1,17 +1,23 @@
 package org.ericp.ehub.server.controller
 
 import org.ericp.ehub.server.entity.ToBuyCategory
-import org.ericp.ehub.server.entity.ToDoCategory
-import org.ericp.ehub.server.service.CategoryService
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
+import org.springframework.web.bind.annotation.DeleteMapping
+import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.PathVariable
+import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.bind.annotation.PutMapping
+import org.springframework.web.bind.annotation.RequestBody
+import org.springframework.web.bind.annotation.RequestParam
+import io.swagger.v3.oas.annotations.tags.Tag
+import org.ericp.ehub.server.repository.ToBuyCategoryRepository
+import org.ericp.ehub.server.service.CategoryService
 import org.springframework.web.bind.annotation.*
 import java.util.*
+import java.util.UUID
 
-@RestController
-@RequestMapping("/api/categories")
-@CrossOrigin
-class CategoryController(
+class TBCategoryController(
     private val categoryService: CategoryService
 ) {
 
@@ -51,46 +57,6 @@ class CategoryController(
     @GetMapping("/tobuy/search")
     fun findToBuyCategoryByName(@RequestParam name: String): ResponseEntity<ToBuyCategory> {
         return categoryService.findToBuyCategoryByName(name)?.let {
-            ResponseEntity.ok(it)
-        } ?: ResponseEntity.notFound().build()
-    }
-
-    // ToDo Categories
-    @GetMapping("/todo")
-    fun getAllToDoCategories(): List<ToDoCategory> = categoryService.findAllToDoCategories()
-
-    @GetMapping("/todo/{id}")
-    fun getToDoCategoryById(@PathVariable id: UUID): ResponseEntity<ToDoCategory> {
-        return categoryService.findToDoCategoryById(id)?.let {
-            ResponseEntity.ok(it)
-        } ?: ResponseEntity.notFound().build()
-    }
-
-    @PostMapping("/todo")
-    fun createToDoCategory(@RequestBody category: ToDoCategory): ResponseEntity<ToDoCategory> {
-        val created = categoryService.createToDoCategory(category)
-        return ResponseEntity.status(HttpStatus.CREATED).body(created)
-    }
-
-    @PutMapping("/todo/{id}")
-    fun updateToDoCategory(@PathVariable id: UUID, @RequestBody category: ToDoCategory): ResponseEntity<ToDoCategory> {
-        return categoryService.updateToDoCategory(id, category)?.let {
-            ResponseEntity.ok(it)
-        } ?: ResponseEntity.notFound().build()
-    }
-
-    @DeleteMapping("/todo/{id}")
-    fun deleteToDoCategory(@PathVariable id: UUID): ResponseEntity<Void> {
-        return if (categoryService.deleteToDoCategory(id)) {
-            ResponseEntity.noContent().build()
-        } else {
-            ResponseEntity.notFound().build()
-        }
-    }
-
-    @GetMapping("/todo/search")
-    fun findToDoCategoryByName(@RequestParam name: String): ResponseEntity<ToDoCategory> {
-        return categoryService.findToDoCategoryByName(name)?.let {
             ResponseEntity.ok(it)
         } ?: ResponseEntity.notFound().build()
     }

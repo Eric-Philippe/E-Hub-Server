@@ -25,9 +25,9 @@ class NonogramController(
         } ?: ResponseEntity.notFound().build()
     }
 
-    @PostMapping("/start")
-    fun startGame(): ResponseEntity<NonogramLog> {
-        val log = nonogramLogService.startGame()
+    @PostMapping
+    fun startGame(@RequestBody log: NonogramLog): ResponseEntity<NonogramLog> {
+        val log = nonogramLogService.create(log)
         return ResponseEntity.status(HttpStatus.CREATED).body(log)
     }
 

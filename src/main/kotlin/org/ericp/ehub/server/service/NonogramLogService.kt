@@ -19,14 +19,6 @@ class NonogramLogService(
 
     fun create(log: NonogramLog): NonogramLog = nonogramLogRepository.save(log)
 
-    fun startGame(): NonogramLog {
-        val log = NonogramLog(
-            started = LocalDateTime.now(),
-            ended = LocalDateTime.now() // Will be updated when game ends
-        )
-        return nonogramLogRepository.save(log)
-    }
-
     fun endGame(id: UUID): NonogramLog? {
         return findById(id)?.let { log ->
             nonogramLogRepository.save(log.copy(ended = LocalDateTime.now()))
