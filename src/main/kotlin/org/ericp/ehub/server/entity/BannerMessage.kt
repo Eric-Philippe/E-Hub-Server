@@ -8,7 +8,7 @@ import java.util.*
 data class BannerMessage(
     @Id
     @GeneratedValue
-    val id: UUID = UUID.randomUUID(),
+    val id: UUID? = null,
 
     @Column(nullable = false, length = 150)
     val message: String,

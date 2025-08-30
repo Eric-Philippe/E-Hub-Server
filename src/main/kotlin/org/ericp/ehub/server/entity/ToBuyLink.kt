@@ -1,5 +1,6 @@
 package org.ericp.ehub.server.entity
 
+import com.fasterxml.jackson.annotation.JsonIgnore
 import jakarta.persistence.*
 import java.util.*
 
@@ -8,7 +9,7 @@ import java.util.*
 data class ToBuyLink(
     @Id
     @GeneratedValue
-    val id: UUID = UUID.randomUUID(),
+    val id: UUID? = null,
 
     @Column(nullable = false, length = 255)
     val url: String,
@@ -19,6 +20,11 @@ data class ToBuyLink(
     @Column(nullable = false)
     val favourite: Boolean = false,
 
-    @Column(name = "tobuy_id", nullable = false)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "tobuy_id", nullable = false)
+    @JsonIgnore
+    val toBuy: ToBuy? = null,
+
+    @Column(name = "tobuy_id", nullable = false, insertable = false, updatable = false)
     val toBuyId: UUID
 )

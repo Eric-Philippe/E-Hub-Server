@@ -8,7 +8,7 @@ import java.util.*
 data class ToBuyCategory(
     @Id
     @GeneratedValue
-    val id: UUID = UUID.randomUUID(),
+    val id: UUID? = null,
 
     @Column(nullable = false, length = 50)
     val name: String,
@@ -17,5 +17,8 @@ data class ToBuyCategory(
     val description: String,
 
     @Column(nullable = false, length = 50)
-    val color: String
+    val color: String,
+
+    @ManyToMany(mappedBy = "tbCategories", fetch = FetchType.LAZY)
+    val toBuyItems: List<ToBuy> = emptyList()
 )

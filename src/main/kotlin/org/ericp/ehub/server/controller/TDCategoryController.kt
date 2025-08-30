@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.*
 import java.util.*
 
 @RestController
-@RequestMapping("/api/categories")
+@RequestMapping("/api/todo/categories")
 @CrossOrigin
 class TDCategoryController(
     private val categoryService: CategoryService
@@ -16,30 +16,30 @@ class TDCategoryController(
 
 
     // ToDo Categories
-    @GetMapping("/todo")
+    @GetMapping
     fun getAllToDoCategories(): List<ToDoCategory> = categoryService.findAllToDoCategories()
 
-    @GetMapping("/todo/{id}")
+    @GetMapping("/{id}")
     fun getToDoCategoryById(@PathVariable id: UUID): ResponseEntity<ToDoCategory> {
         return categoryService.findToDoCategoryById(id)?.let {
             ResponseEntity.ok(it)
         } ?: ResponseEntity.notFound().build()
     }
 
-    @PostMapping("/todo")
+    @PostMapping
     fun createToDoCategory(@RequestBody category: ToDoCategory): ResponseEntity<ToDoCategory> {
         val created = categoryService.createToDoCategory(category)
         return ResponseEntity.status(HttpStatus.CREATED).body(created)
     }
 
-    @PutMapping("/todo/{id}")
+    @PutMapping("/{id}")
     fun updateToDoCategory(@PathVariable id: UUID, @RequestBody category: ToDoCategory): ResponseEntity<ToDoCategory> {
         return categoryService.updateToDoCategory(id, category)?.let {
             ResponseEntity.ok(it)
         } ?: ResponseEntity.notFound().build()
     }
 
-    @DeleteMapping("/todo/{id}")
+    @DeleteMapping("/{id}")
     fun deleteToDoCategory(@PathVariable id: UUID): ResponseEntity<Void> {
         return if (categoryService.deleteToDoCategory(id)) {
             ResponseEntity.noContent().build()
@@ -48,7 +48,7 @@ class TDCategoryController(
         }
     }
 
-    @GetMapping("/todo/search")
+    @GetMapping("/search")
     fun findToDoCategoryByName(@RequestParam name: String): ResponseEntity<ToDoCategory> {
         return categoryService.findToDoCategoryByName(name)?.let {
             ResponseEntity.ok(it)

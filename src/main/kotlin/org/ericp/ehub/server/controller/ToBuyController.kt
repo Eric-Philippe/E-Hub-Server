@@ -1,6 +1,6 @@
 package org.ericp.ehub.server.controller
 
-import org.ericp.ehub.server.entity.ToBuy
+import org.ericp.ehub.server.dto.ToBuyDto
 import org.ericp.ehub.server.entity.ToBuyLink
 import org.ericp.ehub.server.service.ToBuyService
 import org.springframework.http.HttpStatus
@@ -16,23 +16,23 @@ class ToBuyController(
 ) {
 
     @GetMapping
-    fun getAllToBuyItems(): List<ToBuy> = toBuyService.findAll()
+    fun getAllToBuyItems(): List<ToBuyDto> = toBuyService.findAll()
 
     @GetMapping("/{id}")
-    fun getToBuyById(@PathVariable id: UUID): ResponseEntity<ToBuy> {
+    fun getToBuyById(@PathVariable id: UUID): ResponseEntity<ToBuyDto> {
         return toBuyService.findById(id)?.let {
             ResponseEntity.ok(it)
         } ?: ResponseEntity.notFound().build()
     }
 
     @PostMapping
-    fun createToBuy(@RequestBody toBuy: ToBuy): ResponseEntity<ToBuy> {
+    fun createToBuy(@RequestBody toBuy: ToBuyDto): ResponseEntity<ToBuyDto> {
         val created = toBuyService.create(toBuy)
         return ResponseEntity.status(HttpStatus.CREATED).body(created)
     }
 
     @PutMapping("/{id}")
-    fun updateToBuy(@PathVariable id: UUID, @RequestBody toBuy: ToBuy): ResponseEntity<ToBuy> {
+    fun updateToBuy(@PathVariable id: UUID, @RequestBody toBuy: ToBuyDto): ResponseEntity<ToBuyDto> {
         return toBuyService.update(id, toBuy)?.let {
             ResponseEntity.ok(it)
         } ?: ResponseEntity.notFound().build()
@@ -48,31 +48,31 @@ class ToBuyController(
     }
 
     @PatchMapping("/{id}/buy")
-    fun markAsBought(@PathVariable id: UUID): ResponseEntity<ToBuy> {
+    fun markAsBought(@PathVariable id: UUID): ResponseEntity<ToBuyDto> {
         return toBuyService.markAsBought(id)?.let {
             ResponseEntity.ok(it)
         } ?: ResponseEntity.notFound().build()
     }
 
     @GetMapping("/unbought")
-    fun getUnboughtItems(): List<ToBuy> = toBuyService.findUnboughtItems()
+    fun getUnboughtItems(): List<ToBuyDto> = toBuyService.findUnboughtItems()
 
     @GetMapping("/bought")
-    fun getBoughtItems(): List<ToBuy> = toBuyService.findBoughtItems()
+    fun getBoughtItems(): List<ToBuyDto> = toBuyService.findBoughtItems()
 
     @GetMapping("/search")
-    fun searchByTitle(@RequestParam title: String): List<ToBuy> =
+    fun searchByTitle(@RequestParam title: String): List<ToBuyDto> =
         toBuyService.searchByTitle(title)
 
     @GetMapping("/interest/{interest}")
-    fun getByInterest(@PathVariable interest: String): List<ToBuy> =
+    fun getByInterest(@PathVariable interest: String): List<ToBuyDto> =
         toBuyService.findByInterest(interest)
 
     @GetMapping("/price")
     fun getByPriceRange(
         @RequestParam minPrice: Int,
         @RequestParam maxPrice: Int
-    ): List<ToBuy> = toBuyService.findByPriceRange(minPrice, maxPrice)
+    ): List<ToBuyDto> = toBuyService.findByPriceRange(minPrice, maxPrice)
 
     @PostMapping("/{id}/links")
     fun addLink(@PathVariable id: UUID, @RequestBody link: ToBuyLink): ResponseEntity<ToBuyLink> {

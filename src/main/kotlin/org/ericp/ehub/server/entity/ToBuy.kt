@@ -9,7 +9,7 @@ import java.util.*
 data class ToBuy(
     @Id
     @GeneratedValue
-    val id: UUID = UUID.randomUUID(),
+    val id: UUID? = null,
 
     @Column(nullable = false, length = 50)
     val title: String,
@@ -27,5 +27,16 @@ data class ToBuy(
     val estimatedPrice: Int? = null,
 
     @Column(length = 50)
-    val interest: String? = null
+    val interest: String? = null,
+
+    @OneToMany(mappedBy = "toBuy", cascade = [CascadeType.ALL], fetch = FetchType.LAZY)
+    val links: List<ToBuyLink> = emptyList(),
+
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+        name = "TB_CATEGORIES",
+        joinColumns = [JoinColumn(name = "tobuy_id")],
+        inverseJoinColumns = [JoinColumn(name = "category_id")]
+    )
+    val tbCategories: List<ToBuyCategory> = emptyList()
 )
