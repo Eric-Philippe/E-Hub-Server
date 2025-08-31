@@ -1,5 +1,6 @@
 package org.ericp.ehub.server.controller
 
+import org.ericp.ehub.server.dto.ToDoDto
 import org.ericp.ehub.server.entity.ToDo
 import org.ericp.ehub.server.service.ToDoService
 import org.springframework.http.HttpStatus
@@ -15,23 +16,23 @@ class ToDoController(
 ) {
 
     @GetMapping
-    fun getAllToDos(): List<ToDo> = toDoService.findAll()
+    fun getAllToDos(): List<ToDoDto> = toDoService.findAll()
 
     @GetMapping("/{id}")
-    fun getToDoById(@PathVariable id: UUID): ResponseEntity<ToDo> {
+    fun getToDoById(@PathVariable id: UUID): ResponseEntity<ToDoDto> {
         return toDoService.findById(id)?.let {
             ResponseEntity.ok(it)
         } ?: ResponseEntity.notFound().build()
     }
 
     @PostMapping
-    fun createToDo(@RequestBody toDo: ToDo): ResponseEntity<ToDo> {
+    fun createToDo(@RequestBody toDo: ToDoDto): ResponseEntity<ToDoDto> {
         val created = toDoService.create(toDo)
         return ResponseEntity.status(HttpStatus.CREATED).body(created)
     }
 
     @PutMapping("/{id}")
-    fun updateToDo(@PathVariable id: UUID, @RequestBody toDo: ToDo): ResponseEntity<ToDo> {
+    fun updateToDo(@PathVariable id: UUID, @RequestBody toDo: ToDoDto): ResponseEntity<ToDoDto> {
         return toDoService.update(id, toDo)?.let {
             ResponseEntity.ok(it)
         } ?: ResponseEntity.notFound().build()

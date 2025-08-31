@@ -1,15 +1,14 @@
 package org.ericp.ehub.server.mapper
 
-import org.ericp.ehub.server.dto.ToBuyCategoryDto
-import org.ericp.ehub.server.entity.ToBuyCategory
+import org.ericp.ehub.server.dto.ToDoCategoryDto
+import org.ericp.ehub.server.entity.ToDoCategory
 import org.ericp.ehub.server.utils.Utils
 import org.springframework.stereotype.Component
 
 @Component
-class ToBuyCategoryMapper {
-
-    fun toDto(entity: ToBuyCategory): ToBuyCategoryDto {
-        return ToBuyCategoryDto(
+class ToDoCategoryMapper {
+    fun toDto(entity: ToDoCategory): ToDoCategoryDto {
+        return ToDoCategoryDto(
             id = entity.id,
             name = entity.name,
             description = entity.description,
@@ -17,7 +16,7 @@ class ToBuyCategoryMapper {
         )
     }
 
-    fun toEntity(dto: ToBuyCategoryDto): ToBuyCategory {
+    fun toEntity(dto: ToDoCategoryDto): ToDoCategory {
         // Validate that we have either an ID or all required fields for creation
         if (dto.id == null) {
             // For new categories, all fields are required
@@ -26,7 +25,7 @@ class ToBuyCategoryMapper {
             // If color is null, generate a random color
             val color = dto.color ?: Utils.generateRandomColor()
 
-            return ToBuyCategory(
+            return ToDoCategory(
                 id = dto.id,
                 name = dto.name,
                 description = dto.description,
@@ -34,7 +33,7 @@ class ToBuyCategoryMapper {
             )
         }
 
-        return ToBuyCategory(
+        return ToDoCategory(
             id = dto.id,
             name = dto.name ?: "", // This will only be used for new entities where name is validated above
             description = dto.description ?: "",

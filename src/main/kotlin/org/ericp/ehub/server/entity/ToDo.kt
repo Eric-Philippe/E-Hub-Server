@@ -14,5 +14,21 @@ data class ToDo(
     val title: String,
 
     @Column(columnDefinition = "TEXT")
-    val description: String? = null
+    val description: String? = null,
+
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+        name = "td_categories",
+        joinColumns = [JoinColumn(name = "todo_id")],
+        inverseJoinColumns = [JoinColumn(name = "category_id")]
+    )
+    val categories: List<ToDoCategory> = emptyList(),
+
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+        name = "td_has",
+        joinColumns = [JoinColumn(name = "todo_id")],
+        inverseJoinColumns = [JoinColumn(name = "subtask_id")]
+    )
+    val subToDos: List<ToDo> = emptyList()
 )
