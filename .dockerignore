@@ -1,0 +1,28 @@
+# Build artifacts
+build/
+.gradle/
+*.log
+
+# IDE files
+.idea/
+*.iml
+*.iws
+.vscode/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Git
+.git/
+.gitignore
+
+# Documentation
+*.md
+README.md
+
+# Test files
+src/test/
+
+# Local configuration
+application.properties
