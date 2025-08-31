@@ -8,9 +8,6 @@ import java.util.*
 @Table(name = "NONOGRAM_LOGS")
 data class NonogramLog(
     @Id
-    @GeneratedValue
-    val id: UUID? = null,
-
     @Column(nullable = false)
     val started: LocalDateTime,
 

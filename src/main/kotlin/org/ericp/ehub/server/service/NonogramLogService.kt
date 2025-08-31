@@ -19,10 +19,12 @@ class NonogramLogService(
 
     fun create(log: NonogramLog): NonogramLog = nonogramLogRepository.save(log)
 
-    fun endGame(id: UUID): NonogramLog? {
-        return findById(id)?.let { log ->
-            nonogramLogRepository.save(log.copy(ended = LocalDateTime.now()))
-        }
+    fun createAttempt(): NonogramLog {
+        val log = NonogramLog(
+            started = LocalDateTime.now(),
+            ended = null
+        )
+        return nonogramLogRepository.save(log)
     }
 
     fun findGamesBetween(startDate: LocalDateTime, endDate: LocalDateTime): List<NonogramLog> =
@@ -33,11 +35,4 @@ class NonogramLogService(
 
     fun getAverageGameDuration(): Double? =
         nonogramLogRepository.findAverageGameDurationInSeconds()
-
-    fun delete(id: UUID): Boolean {
-        return if (nonogramLogRepository.existsById(id)) {
-            nonogramLogRepository.deleteById(id)
-            true
-        } else false
-    }
 }

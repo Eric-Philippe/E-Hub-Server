@@ -18,24 +18,16 @@ class NonogramController(
     @GetMapping("/logs")
     fun getAllLogs(): List<NonogramLog> = nonogramLogService.findAll()
 
-    @GetMapping("/logs/{id}")
-    fun getLogById(@PathVariable id: UUID): ResponseEntity<NonogramLog> {
-        return nonogramLogService.findById(id)?.let {
-            ResponseEntity.ok(it)
-        } ?: ResponseEntity.notFound().build()
-    }
-
     @PostMapping
-    fun startGame(@RequestBody log: NonogramLog): ResponseEntity<NonogramLog> {
+    fun createGame(@RequestBody log: NonogramLog): ResponseEntity<NonogramLog> {
         val log = nonogramLogService.create(log)
         return ResponseEntity.status(HttpStatus.CREATED).body(log)
     }
 
-    @PatchMapping("/end/{id}")
-    fun endGame(@PathVariable id: UUID): ResponseEntity<NonogramLog> {
-        return nonogramLogService.endGame(id)?.let {
-            ResponseEntity.ok(it)
-        } ?: ResponseEntity.notFound().build()
+    @PostMapping("/start")
+    fun startNewGame(): ResponseEntity<NonogramLog> {
+        val log = nonogramLogService.createAttempt()
+        return ResponseEntity.status(HttpStatus.CREATED).body(log)
     }
 
     @GetMapping("/logs/between")
@@ -57,14 +49,5 @@ class NonogramController(
         return nonogramLogService.getAverageGameDuration()?.let {
             ResponseEntity.ok(it)
         } ?: ResponseEntity.noContent().build()
-    }
-
-    @DeleteMapping("/logs/{id}")
-    fun deleteLog(@PathVariable id: UUID): ResponseEntity<Void> {
-        return if (nonogramLogService.delete(id)) {
-            ResponseEntity.noContent().build()
-        } else {
-            ResponseEntity.notFound().build()
-        }
     }
 }
