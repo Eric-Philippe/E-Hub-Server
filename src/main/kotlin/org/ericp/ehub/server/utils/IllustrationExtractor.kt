@@ -33,7 +33,7 @@ class IllustrationExtractor(
         if (!forceRefresh) cache[url]?.let { return it }
 
         val result = when {
-            "amazon." in url -> extractAmazon(url)
+            "amzn." in url -> extractAmazon(url)
             "ebay." in url -> extractEbay(url)
             "aliexpress." in url -> extractAliExpress(url)
             "leboncoin.fr" in url -> extractLeboncoin(url)
@@ -46,6 +46,12 @@ class IllustrationExtractor(
         }
 
         return result
+    }
+
+    fun extract(urls: List<String>, forceRefresh: Boolean = false): Map<String, String?> {
+        return urls.associateWith { url ->
+            extract(url, forceRefresh)
+        }
     }
 
     // ---------------- Generic ----------------
