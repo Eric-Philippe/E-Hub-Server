@@ -20,6 +20,9 @@ data class ToBuyLink(
     @Column(nullable = false)
     val favourite: Boolean = false,
 
+    @Column(name = "illustration_url", length = 255)
+    val illustrationUrl: String? = null,
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "tobuy_id", nullable = false)
     @JsonIgnore

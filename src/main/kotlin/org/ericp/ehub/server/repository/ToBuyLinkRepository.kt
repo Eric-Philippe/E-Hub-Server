@@ -12,13 +12,8 @@ interface ToBuyLinkRepository : JpaRepository<ToBuyLink, UUID> {
 
     fun findByToBuyId(toBuyId: UUID): List<ToBuyLink>
 
-    fun findByFavouriteTrue(): List<ToBuyLink>
+    fun findByToBuyIdAndUrl(toBuyId: UUID, url: String): Optional<ToBuyLink>
 
-    fun findByUrlContainingIgnoreCase(url: String): List<ToBuyLink>
-
-    fun findByPriceIsNotNull(): List<ToBuyLink>
-
-    @Modifying
-    @Query("DELETE FROM ToBuyLink t WHERE t.toBuyId = :toBuyId")
-    fun deleteByToBuyId(toBuyId: UUID)
+    @Query("SELECT t.url, t.illustrationUrl FROM ToBuyLink t WHERE t.illustrationUrl IS NOT NULL")
+    fun findAllUrlAndIllustrationUrl(): List<Array<Any>>
 }

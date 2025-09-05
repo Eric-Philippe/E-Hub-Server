@@ -11,6 +11,9 @@ data class ToBuy(
     @GeneratedValue
     val id: UUID? = null,
 
+    @Column
+    val created: LocalDateTime = LocalDateTime.now(),
+
     @Column(nullable = false, length = 50)
     val title: String,
 

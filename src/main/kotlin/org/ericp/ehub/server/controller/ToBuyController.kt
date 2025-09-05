@@ -1,6 +1,7 @@
 package org.ericp.ehub.server.controller
 
 import org.ericp.ehub.server.dto.ToBuyDto
+import org.ericp.ehub.server.dto.ToBuyUpdateDto
 import org.ericp.ehub.server.entity.ToBuyLink
 import org.ericp.ehub.server.service.ToBuyService
 import org.springframework.http.HttpStatus
@@ -32,7 +33,7 @@ class ToBuyController(
     }
 
     @PutMapping("/{id}")
-    fun updateToBuy(@PathVariable id: UUID, @RequestBody toBuy: ToBuyDto): ResponseEntity<ToBuyDto> {
+    fun updateToBuy(@PathVariable id: UUID, @RequestBody toBuy: ToBuyUpdateDto): ResponseEntity<ToBuyDto> {
         return toBuyService.update(id, toBuy)?.let {
             ResponseEntity.ok(it)
         } ?: ResponseEntity.notFound().build()

@@ -7,5 +7,14 @@ data class ToBuyLinkDto(
     val url: String,
     val price: Short? = null,
     val favourite: Boolean = false,
+    val illustration_url: String? = null,
+    val toBuyId: UUID? = null
+)
+
+data class ToBuyLinkUpdateDto(
+    val id: UUID? = null,
+    val url: String?,
+    val price: Short? = null,
+    val favourite: Boolean? = false,
     val toBuyId: UUID? = null
 )

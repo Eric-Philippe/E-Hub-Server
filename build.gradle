@@ -5,6 +5,7 @@ plugins {
     id 'war'
     id 'org.springframework.boot' version '3.5.5'
     id 'io.spring.dependency-management' version '1.1.7'
+    id 'org.flywaydb.flyway' version '10.13.0'
 }
 
 group = 'org.ericp.ehub'
@@ -26,6 +27,9 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
     implementation 'org.springframework.boot:spring-boot-starter-security'
     implementation 'org.jetbrains.kotlin:kotlin-reflect'
+
+    implementation("org.jsoup:jsoup:1.18.1")
+    implementation("org.json:json:20240303")
 
     // Migration de base de données avec Flyway
     implementation 'org.flywaydb:flyway-core'
