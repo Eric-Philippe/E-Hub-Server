@@ -104,6 +104,7 @@ class ToBuyService(
     fun delete(id: UUID): Boolean {
         return if (toBuyRepository.existsById(id)) {
             toBuyRepository.deleteById(id)
+            toBuyLinkRepository.deleteByToBuyId(id)
             true
         } else false
     }
