@@ -55,41 +55,46 @@ class ToBuyService(
             val toBuyEntity = mapper.toEntity(updatedToBuyDto.copy(id = id), currentToBuy.get(), categories)
             val savedToBuy = toBuyRepository.save(toBuyEntity)
 
-            /**
-             * If id or toBuyId is provided, update existing link
-             * If no id or toBuyId, still try to find with toBuyEntity id and url
-             * If found, update it
-             * If not found, create new one
-             * If link is missing from the before update list, delete it
-             */
-            val existingLinks = toBuyLinkRepository.findByToBuyId(id).associateBy { it.id }
             val updatedLinks = mutableListOf<ToBuyLink>()
-            for (linkDto in updatedToBuyDto.links) {
-                val linkEntity = if (linkDto.id != null && existingLinks.containsKey(linkDto.id)) {
-                    // Update existing link by ID
-                    val existingLink = existingLinks[linkDto.id]!!
-                    existingLink.copy(
-                        url = linkDto.url ?: existingLink.url,
-                        price = linkDto.price ?: existingLink.price,
-                        favourite = linkDto.favourite ?: existingLink.favourite,
-                        illustrationUrl = illustrationExtractor.extract(linkDto.url ?: existingLink.url, false) ?: existingLink.illustrationUrl
-                    )
-                } else {
-                    // Try to find by URL and toBuyId
-                    val foundLink = toBuyLinkRepository.findByToBuyIdAndUrl(id, linkDto.url ?: "")
-                    if (foundLink.isPresent) {
-                        // Update found link
-                        foundLink.get().copy(
-                            price = linkDto.price ?: foundLink.get().price,
-                            favourite = linkDto.favourite ?: foundLink.get().favourite
+            if (updatedToBuyDto.links.isEmpty()) {
+                // If links is empty, delete all current links for this toBuy
+                toBuyLinkRepository.deleteByToBuyId(id)
+            } else {
+                /**
+                 * If id or toBuyId is provided, update existing link
+                 * If no id or toBuyId, still try to find with toBuyEntity id and url
+                 * If found, update it
+                 * If not found, create new one
+                 * If link is missing from the before update list, delete it
+                 */
+                val existingLinks = toBuyLinkRepository.findByToBuyId(id).associateBy { it.id }
+                for (linkDto in updatedToBuyDto.links) {
+                    val linkEntity = if (linkDto.id != null && existingLinks.containsKey(linkDto.id)) {
+                        // Update existing link by ID
+                        val existingLink = existingLinks[linkDto.id]!!
+                        existingLink.copy(
+                            url = linkDto.url ?: existingLink.url,
+                            price = linkDto.price ?: existingLink.price,
+                            favourite = linkDto.favourite ?: existingLink.favourite,
+                            illustrationUrl = illustrationExtractor.extract(linkDto.url ?: existingLink.url, false) ?: existingLink.illustrationUrl
                         )
                     } else {
-                        mapper.toLinkEntity(linkDto, savedToBuy)
+                        // Try to find by URL and toBuyId
+                        val foundLink = toBuyLinkRepository.findByToBuyIdAndUrl(id, linkDto.url ?: "")
+                        if (foundLink.isPresent) {
+                            // Update found link
+                            foundLink.get().copy(
+                                price = linkDto.price ?: foundLink.get().price,
+                                favourite = linkDto.favourite ?: foundLink.get().favourite
+                            )
+                        } else {
+                            mapper.toLinkEntity(linkDto, savedToBuy)
+                        }
                     }
-                }
 
-                val savedLink = toBuyLinkRepository.save(linkEntity)
-                updatedLinks.add(savedLink)
+                    val savedLink = toBuyLinkRepository.save(linkEntity)
+                    updatedLinks.add(savedLink)
+                }
             }
 
             mapper.toDto(savedToBuy.copy(links = updatedLinks))
