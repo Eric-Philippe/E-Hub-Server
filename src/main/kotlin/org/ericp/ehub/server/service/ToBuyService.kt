@@ -74,9 +74,9 @@ class ToBuyService(
                         val existingLink = existingLinks[linkDto.id]!!
                         existingLink.copy(
                             url = linkDto.url ?: existingLink.url,
+                            illustrationUrl = illustrationExtractor.extract(linkDto.url ?: existingLink.url, false) ?: existingLink.illustrationUrl,
                             price = linkDto.price ?: existingLink.price,
-                            favourite = linkDto.favourite ?: existingLink.favourite,
-                            illustrationUrl = illustrationExtractor.extract(linkDto.url ?: existingLink.url, false) ?: existingLink.illustrationUrl
+                            favourite = linkDto.favourite ?: existingLink.favourite
                         )
                     } else {
                         // Try to find by URL and toBuyId

@@ -62,6 +62,7 @@ class ToBuyMapper(
         return ToBuyLinkDto(
             id = entity.id,
             url = entity.url,
+            illustrationUrl = entity.illustrationUrl,
             price = entity.price,
             favourite = entity.favourite,
             toBuyId = entity.toBuyId
@@ -78,9 +79,9 @@ class ToBuyMapper(
         return ToBuyLink(
             id = dto.id, // Let Hibernate manage ID generation for new entities
             url = dto.url,
+            illustrationUrl = illustrationExtractor.extract(dto.url),
             price = dto.price,
             favourite = dto.favourite,
-            illustrationUrl = illustrationExtractor.extract(dto.url),
             toBuy = toBuy,
             toBuyId = toBuyId
         )
@@ -91,6 +92,7 @@ class ToBuyMapper(
         val toBuyLinkDto = ToBuyLinkDto(
             id = dto.id,
             url = dto.url ?: "",
+            illustrationUrl = dto.illustrationUrl,
             price = dto.price,
             favourite = dto.favourite ?: false,
             toBuyId = toBuy?.id
