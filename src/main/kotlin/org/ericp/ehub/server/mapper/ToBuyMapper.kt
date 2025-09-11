@@ -20,6 +20,7 @@ class ToBuyMapper(
         return ToBuyDto(
             id = entity.id,
             title = entity.title,
+            created = entity.created,
             description = entity.description,
             criteria = entity.criteria,
             bought = entity.bought,

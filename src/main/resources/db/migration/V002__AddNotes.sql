@@ -1,0 +1,8 @@
+CREATE TABLE notes
+(
+    id       UUID NOT NULL,
+    content  TEXT NOT NULL,
+    created  TIMESTAMP WITHOUT TIME ZONE NOT NULL,
+    modified TIMESTAMP WITHOUT TIME ZONE,
+    CONSTRAINT pk_notes PRIMARY KEY (id)
+);
