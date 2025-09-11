@@ -35,4 +35,7 @@ class NonogramLogService(
 
     fun getAverageGameDuration(): Double? =
         nonogramLogRepository.findAverageGameDurationInSeconds()
+
+    fun getTotalGamesPlayed(): Int =
+        nonogramLogRepository.count().toInt()
 }

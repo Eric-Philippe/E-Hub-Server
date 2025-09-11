@@ -50,4 +50,9 @@ class NonogramController(
             ResponseEntity.ok(it)
         } ?: ResponseEntity.noContent().build()
     }
+
+    @GetMapping("/stats/total-games")
+    fun getTotalGamesPlayed(): ResponseEntity<Int> {
+        return ResponseEntity.ok(nonogramLogService.getTotalGamesPlayed())
+    }
 }

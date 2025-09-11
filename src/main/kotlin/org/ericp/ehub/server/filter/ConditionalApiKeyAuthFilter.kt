@@ -89,7 +89,9 @@ class ConditionalApiKeyAuthFilter(
             "/v3/api-docs",
             "/v2/api-docs",
             "/webjars",
-            "/actuator/health"
+            "/actuator/health",
+            "/actuator/info",
+            "/api/health"
         )
         return publicPaths.any { path.startsWith(it) }
     }

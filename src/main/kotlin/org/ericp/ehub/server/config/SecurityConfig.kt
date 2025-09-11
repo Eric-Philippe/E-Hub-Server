@@ -25,7 +25,9 @@ class SecurityConfig(
                         "/v3/api-docs/**",
                         "/v2/api-docs",
                         "/webjars/**",
-                        "/actuator/health"
+                        "/api/health/**",
+                        "/actuator/health/**",
+                        "/actuator/info/**",
                     ).permitAll()
                     .anyRequest().authenticated()
             }
