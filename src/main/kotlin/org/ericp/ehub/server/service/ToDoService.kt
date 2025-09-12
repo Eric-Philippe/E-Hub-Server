@@ -74,7 +74,84 @@ class ToDoService(
         return rootToDos.map { buildToDtoWithChildren(it) }
     }
 
-    fun findById(id: UUID): ToDoDto? = toDoRepository.findByIdWithTree(id)?.let { mapper.toDto(it) }
+    fun findById(id: UUID): ToDoDto? {
+        // Get the specific ToDo
+        val targetToDo = toDoRepository.findById(id).orElse(null) ?: return null
+
+        // Get all ToDos to build relationships
+        val allToDos = toDoRepository.findAll()
+
+        // Build a map of parent ID to children for quick lookup
+        val childrenByParentId = mutableMapOf<UUID, MutableList<ToDo>>()
+
+        allToDos.forEach { todo ->
+            todo.parent?.id?.let { parentId ->
+                childrenByParentId.computeIfAbsent(parentId) { mutableListOf() }.add(todo)
+            }
+        }
+
+        // Function to recursively build children
+        fun buildChildrenRecursively(parentId: UUID): List<ToDoDto> {
+            return childrenByParentId[parentId]?.map { child ->
+                ToDoDto(
+                    id = child.id,
+                    label = child.label,
+                    state = child.state,
+                    color = child.color,
+                    created = child.created,
+                    modified = child.modified,
+                    dueDate = child.dueDate,
+                    description = child.description,
+                    parent = ToDoDto(
+                        id = targetToDo.id,
+                        label = targetToDo.label,
+                        state = targetToDo.state,
+                        color = targetToDo.color,
+                        created = targetToDo.created,
+                        modified = targetToDo.modified,
+                        dueDate = targetToDo.dueDate,
+                        description = targetToDo.description,
+                        parent = null,
+                        children = null
+                    ),
+                    children = child.id?.let { childId -> buildChildrenRecursively(childId) } ?: emptyList()
+                )
+            } ?: emptyList()
+        }
+
+        // Build the parent (only immediate parent, no grandparents)
+        val parent = targetToDo.parent?.let { parentEntity ->
+            ToDoDto(
+                id = parentEntity.id,
+                label = parentEntity.label,
+                state = parentEntity.state,
+                color = parentEntity.color,
+                created = parentEntity.created,
+                modified = parentEntity.modified,
+                dueDate = parentEntity.dueDate,
+                description = parentEntity.description,
+                parent = null, // Don't include grandparent
+                children = null // Don't include parent's other children
+            )
+        }
+
+        // Build all children recursively
+        val children = targetToDo.id?.let { buildChildrenRecursively(it) } ?: emptyList()
+
+        // Return the target ToDo with its immediate parent and all children
+        return ToDoDto(
+            id = targetToDo.id,
+            label = targetToDo.label,
+            state = targetToDo.state,
+            color = targetToDo.color,
+            created = targetToDo.created,
+            modified = targetToDo.modified,
+            dueDate = targetToDo.dueDate,
+            description = targetToDo.description,
+            parent = parent,
+            children = children
+        )
+    }
 
     fun create(toDoDto: ToDoDto): ToDoDto {
         val entity = mapper.toEntity(toDoDto)
