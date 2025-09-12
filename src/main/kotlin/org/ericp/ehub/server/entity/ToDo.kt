@@ -18,31 +18,25 @@ data class ToDo(
     val id: UUID? = null,
 
     @Column(nullable = false, length = 50)
-    val label: String,
+    var label: String,
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    val state: State,
+    var state: State,
 
     @Column(length = 7)
-    val color: String = "#FFFFFF",
+    var color: String? = null,
 
     @Column(nullable = false)
     val created: LocalDateTime = LocalDateTime.now(),
 
-    @Column
-    val modified: LocalDateTime? = null,
-
-    @Column
-    val dueDate: LocalDateTime? = null,
+    var modified: LocalDateTime? = null,
+    var dueDate: LocalDateTime? = null,
 
     @Column(columnDefinition = "TEXT")
-    val description: String? = null,
+    var description: String? = null,
 
-    @ManyToOne(optional = true)
-    @JoinColumn(name = "parent_id", referencedColumnName = "id")
-    val parent: ToDo? = null,
-
-    @OneToMany(mappedBy = "parent", cascade = [CascadeType.ALL], fetch = FetchType.LAZY)
-    val children: MutableSet<ToDo> = mutableSetOf()
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "parent_id")
+    var parent: ToDo? = null
 )
