@@ -1,7 +1,7 @@
 package org.ericp.ehub.server.controller
 
 import org.ericp.ehub.server.dto.ToDoDto
-import org.ericp.ehub.server.entity.ToDo
+import org.ericp.ehub.server.dto.ToDoDtoPartial
 import org.ericp.ehub.server.service.ToDoService
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
@@ -14,7 +14,6 @@ import java.util.*
 class ToDoController(
     private val toDoService: ToDoService
 ) {
-
     @GetMapping
     fun getAllToDos(): List<ToDoDto> = toDoService.findAll()
 
@@ -26,7 +25,7 @@ class ToDoController(
     }
 
     @PostMapping
-    fun createToDo(@RequestBody toDo: ToDoDto): ResponseEntity<ToDoDto> {
+    fun createToDo(@RequestBody toDo: ToDoDtoPartial): ResponseEntity<ToDoDto> {
         val created = toDoService.create(toDo)
         return ResponseEntity.status(HttpStatus.CREATED).body(created)
     }
@@ -47,11 +46,18 @@ class ToDoController(
         }
     }
 
-    @GetMapping("/search")
-    fun searchByTitle(@RequestParam title: String): List<ToDo> =
-        toDoService.searchByTitle(title)
+    @PutMapping("/bulk")
+    fun bulkUpdate(@RequestBody toDos: List<ToDoDto>): ResponseEntity<List<ToDoDto>> {
+        val updated = toDoService.bulkUpdate(toDos)
+        return ResponseEntity.ok(updated)
+    }
 
-    @GetMapping("/search/description")
-    fun searchByDescription(@RequestParam description: String): List<ToDo> =
-        toDoService.searchByDescription(description)
+    @DeleteMapping("/bulk")
+    fun bulkDelete(@RequestBody ids: List<UUID>): ResponseEntity<Void> {
+        return if (toDoService.bulkDelete(ids)) {
+            ResponseEntity.noContent().build()
+        } else {
+            ResponseEntity.notFound().build()
+        }
+    }
 }

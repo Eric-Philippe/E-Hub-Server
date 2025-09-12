@@ -1,6 +1,7 @@
 package org.ericp.ehub.server.service
 
 import org.ericp.ehub.server.dto.ToDoDto
+import org.ericp.ehub.server.dto.ToDoDtoPartial
 import org.ericp.ehub.server.entity.ToDo
 import org.ericp.ehub.server.mapper.ToDoMapper
 import org.ericp.ehub.server.repository.ToDoRepository
@@ -12,127 +13,109 @@ import java.util.*
 @Transactional
 class ToDoService(
     private val toDoRepository: ToDoRepository,
-    private val toDoCategoryService: ToDoCategoryService,
     private val mapper: ToDoMapper
 ) {
+    fun findAll(): List<ToDoDto> {
+        // Get all ToDos from database - use simple findAll to avoid lazy loading issues
+        val allToDos = toDoRepository.findAll()
 
-    fun findAll(): List<ToDoDto> = toDoRepository.findAll().map { mapper.toDto(it)}
+        // Build the tree structure manually
+        // Create a map of parent ID to children for quick lookup
+        val childrenByParentId = mutableMapOf<UUID, MutableList<ToDo>>()
+        val rootToDos = mutableListOf<ToDo>()
 
-    fun findById(id: UUID): ToDoDto? = toDoRepository.findById(id)
-        .map { mapper.toDto(it) }
-        .orElse(null)
+        // First pass: categorize all ToDos
+        allToDos.forEach { todo ->
+            if (todo.parent == null) {
+                rootToDos.add(todo)
+            } else {
+                todo.parent.id?.let { parentId ->
+                    childrenByParentId.computeIfAbsent(parentId) { mutableListOf() }.add(todo)
+                }
+            }
+        }
+
+        // Function to recursively build ToDoDto with children
+        fun buildToDtoWithChildren(entity: ToDo): ToDoDto {
+            val children = childrenByParentId[entity.id]?.map { child ->
+                buildToDtoWithChildren(child)
+            } ?: emptyList()
+
+            val parent = entity.parent?.let { parentEntity ->
+                ToDoDto(
+                    id = parentEntity.id,
+                    label = parentEntity.label,
+                    state = parentEntity.state,
+                    color = parentEntity.color,
+                    created = parentEntity.created,
+                    modified = parentEntity.modified,
+                    dueDate = parentEntity.dueDate,
+                    description = parentEntity.description,
+                    parent = null, // Don't include grandparent
+                    children = null // Don't include parent's other children
+                )
+            }
+
+            return ToDoDto(
+                id = entity.id,
+                label = entity.label,
+                state = entity.state,
+                color = entity.color,
+                created = entity.created,
+                modified = entity.modified,
+                dueDate = entity.dueDate,
+                description = entity.description,
+                parent = parent,
+                children = children
+            )
+        }
+
+        // Convert root ToDos to DTOs with their full tree structure
+        return rootToDos.map { buildToDtoWithChildren(it) }
+    }
+
+    fun findById(id: UUID): ToDoDto? = toDoRepository.findByIdWithTree(id)?.let { mapper.toDto(it) }
 
     fun create(toDoDto: ToDoDto): ToDoDto {
-        return createToDoRecursively(toDoDto)
+        val entity = mapper.toEntity(toDoDto)
+        val saved = toDoRepository.save(entity)
+        return mapper.toDto(saved)
     }
 
-    private fun createToDoRecursively(toDoDto: ToDoDto): ToDoDto {
-        // Process categories: find existing ones by ID or create new ones
-        val categories = toDoCategoryService.processCategories(toDoDto.categories ?: emptyList())
-
-        // Process subtasks recursively first (bottom-up approach)
-        val createdSubTasks: List<ToDoDto> = if (!toDoDto.subToDos.isNullOrEmpty()) {
-            toDoDto.subToDos.map { subToDoDto ->
-                // Recursively create each subtask
-                createToDoRecursively(subToDoDto)
-            }
-        } else {
-            emptyList()
-        }
-
-        // Convert the created subtask DTOs back to entities for the parent relationship
-        val subTaskEntities = createdSubTasks.map { createdSubTaskDto ->
-            // Fetch the saved entity from DB using the ID
-            toDoRepository.findById(createdSubTaskDto.id!!).get()
-        }
-
-        // Create the main td with all processed subtasks
-        val toDoEntity = mapper.toEntity(toDoDto, categories, subTaskEntities)
-        val savedToDo = toDoRepository.save(toDoEntity)
-
-        return mapper.toDto(savedToDo)
+    fun create(toDoDtoPartial: ToDoDtoPartial): ToDoDto {
+        val parent = toDoDtoPartial.parentId?.let { toDoRepository.findById(it).orElse(null) }
+        val entity = mapper.toEntityPartial(toDoDtoPartial, parent)
+        val saved = toDoRepository.save(entity)
+        return mapper.toDto(saved)
     }
 
-    @Transactional
-    fun update(id: UUID, updatedToDoDto: ToDoDto): ToDoDto? {
+    fun update(id: UUID, toDoDto: ToDoDto): ToDoDto? {
         return if (toDoRepository.existsById(id)) {
-            // Process categories: find existing ones by ID or create new ones
-            val categories = toDoCategoryService.processCategories(updatedToDoDto.categories ?: emptyList())
-
-            val toDoEntity = mapper.toEntity(updatedToDoDto.copy(id = id), categories)
-            val savedToDo = toDoRepository.save(toDoEntity)
-
-            mapper.toDto(savedToDo)
-        } else {
-            null
-        }
+            val entity = mapper.toEntity(toDoDto.copy(id = id))
+            val saved = toDoRepository.save(entity)
+            mapper.toDto(saved)
+        } else null
     }
 
     fun delete(id: UUID): Boolean {
         return if (toDoRepository.existsById(id)) {
             toDoRepository.deleteById(id)
             true
-        } else {
-            false
-        }
+        } else false
     }
 
-    fun searchByTitle(title: String): List<ToDo> =
-        toDoRepository.findByTitleContainingIgnoreCase(title)
-
-    fun searchByDescription(description: String): List<ToDo> =
-        toDoRepository.findByDescriptionContainingIgnoreCase(description)
-
-    fun addSubtask(parentId: UUID, toDoDto: ToDoDto): ToDo? {
-        val parentTodo = toDoRepository.findById(parentId).orElse(null)
-        return if (parentTodo != null) {
-            val categories = toDoCategoryService.processCategories(toDoDto.categories ?: emptyList())
-            val subtaskEntity = mapper.toEntity(toDoDto, categories)
-            val savedSubtask = toDoRepository.save(subtaskEntity)
-
-            // Update the parent td to include the new subtask
-            val updatedParent = parentTodo.copy(
-                subToDos = parentTodo.subToDos + savedSubtask
-            )
-            toDoRepository.save(updatedParent)
-
-            savedSubtask
-        } else {
-            null
-        }
+    fun bulkUpdate(toDos: List<ToDoDto>): List<ToDoDto> {
+        val entities = toDos.map { mapper.toEntity(it) }
+        val saved = toDoRepository.saveAll(entities)
+        return saved.map { mapper.toDto(it) }
     }
 
-    fun findSubToDos(parentId: UUID): List<ToDoDto> {
-        val parent = toDoRepository.findById(parentId).orElse(null)
-        return if (parent != null) {
-            parent.subToDos.map { mapper.toDto(it) }
-        } else {
-            emptyList()
+    fun bulkDelete(ids: List<UUID>): Boolean {
+        val existing = toDoRepository.findAllById(ids)
+        if (existing.isNotEmpty()) {
+            toDoRepository.deleteAll(existing)
+            return true
         }
-    }
-
-    fun findRootToDos(): List<ToDoDto> {
-        // For now, return all todos since we no longer have a direct parent-child relationship
-        // You might need to implement custom logic based on your business requirements
-        return findAll()
-    }
-
-    fun addSubtaskDto(parentId: UUID, toDoDto: ToDoDto): ToDoDto? {
-        val parentTodo = toDoRepository.findById(parentId).orElse(null)
-        return if (parentTodo != null) {
-            val categories = toDoCategoryService.processCategories(toDoDto.categories ?: emptyList())
-            val subtaskEntity = mapper.toEntity(toDoDto, categories)
-            val savedSubtask = toDoRepository.save(subtaskEntity)
-
-            // Update the parent td to include the new subtask
-            val updatedParent = parentTodo.copy(
-                subToDos = parentTodo.subToDos + savedSubtask
-            )
-            toDoRepository.save(updatedParent)
-
-            mapper.toDto(savedSubtask)
-        } else {
-            null
-        }
+        return false
     }
 }

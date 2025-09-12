@@ -1,7 +1,14 @@
 package org.ericp.ehub.server.entity
 
 import jakarta.persistence.*
+import java.time.LocalDateTime
 import java.util.*
+
+enum class State {
+    TODO,
+    IN_PROGRESS,
+    DONE
+}
 
 @Entity
 @Table(name = "TODO")
@@ -11,24 +18,31 @@ data class ToDo(
     val id: UUID? = null,
 
     @Column(nullable = false, length = 50)
-    val title: String,
+    val label: String,
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    val state: State,
+
+    @Column(length = 7)
+    val color: String = "#FFFFFF",
+
+    @Column(nullable = false)
+    val created: LocalDateTime = LocalDateTime.now(),
+
+    @Column
+    val modified: LocalDateTime? = null,
+
+    @Column
+    val dueDate: LocalDateTime? = null,
 
     @Column(columnDefinition = "TEXT")
     val description: String? = null,
 
-    @ManyToMany(fetch = FetchType.LAZY)
-    @JoinTable(
-        name = "td_categories",
-        joinColumns = [JoinColumn(name = "todo_id")],
-        inverseJoinColumns = [JoinColumn(name = "category_id")]
-    )
-    val categories: List<ToDoCategory> = emptyList(),
+    @ManyToOne(optional = true)
+    @JoinColumn(name = "parent_id", referencedColumnName = "id")
+    val parent: ToDo? = null,
 
-    @ManyToMany(fetch = FetchType.LAZY)
-    @JoinTable(
-        name = "td_has",
-        joinColumns = [JoinColumn(name = "todo_id")],
-        inverseJoinColumns = [JoinColumn(name = "subtask_id")]
-    )
-    val subToDos: List<ToDo> = emptyList()
+    @OneToMany(mappedBy = "parent", cascade = [CascadeType.ALL], fetch = FetchType.LAZY)
+    val children: MutableSet<ToDo> = mutableSetOf()
 )
