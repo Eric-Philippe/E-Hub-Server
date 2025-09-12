@@ -1,138 +1,110 @@
 package org.ericp.ehub.server.service
 
 import org.ericp.ehub.server.dto.ToDoDto
+import org.ericp.ehub.server.dto.ToDoRequest
+import org.ericp.ehub.server.entity.State
 import org.ericp.ehub.server.entity.ToDo
 import org.ericp.ehub.server.mapper.ToDoMapper
 import org.ericp.ehub.server.repository.ToDoRepository
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import java.time.LocalDateTime
 import java.util.*
 
 @Service
 @Transactional
 class ToDoService(
     private val toDoRepository: ToDoRepository,
-    private val toDoCategoryService: ToDoCategoryService,
     private val mapper: ToDoMapper
 ) {
 
-    fun findAll(): List<ToDoDto> = toDoRepository.findAll().map { mapper.toDto(it)}
-
-    fun findById(id: UUID): ToDoDto? = toDoRepository.findById(id)
-        .map { mapper.toDto(it) }
-        .orElse(null)
-
-    fun create(toDoDto: ToDoDto): ToDoDto {
-        return createToDoRecursively(toDoDto)
+    fun findAll(): List<ToDoDto> {
+        val todos = toDoRepository.findAll()
+        return mapper.toDtoTree(todos)
     }
 
-    private fun createToDoRecursively(toDoDto: ToDoDto): ToDoDto {
-        // Process categories: find existing ones by ID or create new ones
-        val categories = toDoCategoryService.processCategories(toDoDto.categories ?: emptyList())
+    fun findById(id: UUID): ToDoDto {
+        val todo = toDoRepository.findById(id)
+            .orElseThrow { NoSuchElementException("ToDo with id=$id not found") }
+        return mapper.toDto(todo)
+    }
 
-        // Process subtasks recursively first (bottom-up approach)
-        val createdSubTasks: List<ToDoDto> = if (!toDoDto.subToDos.isNullOrEmpty()) {
-            toDoDto.subToDos.map { subToDoDto ->
-                // Recursively create each subtask
-                createToDoRecursively(subToDoDto)
+
+    fun create(request: ToDoRequest): ToDoDto {
+        val parent = request.parentId?.let { pid ->
+            toDoRepository.findById(pid).orElse(null)
+        }
+
+        val entity = mapper.toEntity(request, parent)
+        val saved = toDoRepository.save(entity)
+        return mapper.toDto(saved)
+    }
+
+    fun deleteRecursively(id: UUID) {
+        val todo = toDoRepository.findById(id)
+            .orElseThrow { NoSuchElementException("ToDo with id=$id not found") }
+        deleteChildren(todo)
+        toDoRepository.delete(todo)
+    }
+
+    private fun deleteChildren(todo: ToDo) {
+        val children = toDoRepository.findByParentId(todo.id!!)
+        children.forEach { deleteChildren(it) }
+        toDoRepository.deleteAll(children)
+    }
+
+    fun update(id: UUID, request: ToDoRequest): ToDoDto {
+        val todo = toDoRepository.findById(id)
+            .orElseThrow { NoSuchElementException("ToDo with id=$id not found") }
+
+        val parent = request.parentId?.let { pid ->
+            if (pid == id) throw IllegalArgumentException("A ToDo cannot be its own parent")
+            toDoRepository.findById(pid).orElse(null)
+        }
+
+        mapper.updateEntityFromRequest(todo, request, parent)
+        val saved = toDoRepository.save(todo)
+        return mapper.toDto(saved)
+    }
+
+    fun updateState(id: UUID, newState: State): ToDoDto {
+        val todo = toDoRepository.findById(id)
+            .orElseThrow { NoSuchElementException("ToDo with id=$id not found") }
+        if (todo.state == newState) return mapper.toDto(todo)
+        todo.state = newState
+        todo.modified = LocalDateTime.now()
+        toDoRepository.save(todo)
+        propagateStateUp(todo)
+        return mapper.toDto(todo)
+    }
+
+    fun getColorFromParent(parentId : UUID?): String {
+        var currentId = parentId
+        while (currentId != null) {
+            val parent = toDoRepository.findById(currentId).orElse(null) ?: return "#FFFFFF"
+            if (parent.color != null) {
+                return parent.color!!
             }
-        } else {
-            emptyList()
+            currentId = parent.parent?.id
         }
-
-        // Convert the created subtask DTOs back to entities for the parent relationship
-        val subTaskEntities = createdSubTasks.map { createdSubTaskDto ->
-            // Fetch the saved entity from DB using the ID
-            toDoRepository.findById(createdSubTaskDto.id!!).get()
-        }
-
-        // Create the main td with all processed subtasks
-        val toDoEntity = mapper.toEntity(toDoDto, categories, subTaskEntities)
-        val savedToDo = toDoRepository.save(toDoEntity)
-
-        return mapper.toDto(savedToDo)
+        return "#FFFFFF" // Default color if no ancestor has a color
     }
 
-    @Transactional
-    fun update(id: UUID, updatedToDoDto: ToDoDto): ToDoDto? {
-        return if (toDoRepository.existsById(id)) {
-            // Process categories: find existing ones by ID or create new ones
-            val categories = toDoCategoryService.processCategories(updatedToDoDto.categories ?: emptyList())
-
-            val toDoEntity = mapper.toEntity(updatedToDoDto.copy(id = id), categories)
-            val savedToDo = toDoRepository.save(toDoEntity)
-
-            mapper.toDto(savedToDo)
-        } else {
-            null
-        }
-    }
-
-    fun delete(id: UUID): Boolean {
-        return if (toDoRepository.existsById(id)) {
-            toDoRepository.deleteById(id)
-            true
-        } else {
-            false
-        }
-    }
-
-    fun searchByTitle(title: String): List<ToDo> =
-        toDoRepository.findByTitleContainingIgnoreCase(title)
-
-    fun searchByDescription(description: String): List<ToDo> =
-        toDoRepository.findByDescriptionContainingIgnoreCase(description)
-
-    fun addSubtask(parentId: UUID, toDoDto: ToDoDto): ToDo? {
-        val parentTodo = toDoRepository.findById(parentId).orElse(null)
-        return if (parentTodo != null) {
-            val categories = toDoCategoryService.processCategories(toDoDto.categories ?: emptyList())
-            val subtaskEntity = mapper.toEntity(toDoDto, categories)
-            val savedSubtask = toDoRepository.save(subtaskEntity)
-
-            // Update the parent td to include the new subtask
-            val updatedParent = parentTodo.copy(
-                subToDos = parentTodo.subToDos + savedSubtask
-            )
-            toDoRepository.save(updatedParent)
-
-            savedSubtask
-        } else {
-            null
-        }
-    }
-
-    fun findSubToDos(parentId: UUID): List<ToDoDto> {
-        val parent = toDoRepository.findById(parentId).orElse(null)
-        return if (parent != null) {
-            parent.subToDos.map { mapper.toDto(it) }
-        } else {
-            emptyList()
-        }
-    }
-
-    fun findRootToDos(): List<ToDoDto> {
-        // For now, return all todos since we no longer have a direct parent-child relationship
-        // You might need to implement custom logic based on your business requirements
-        return findAll()
-    }
-
-    fun addSubtaskDto(parentId: UUID, toDoDto: ToDoDto): ToDoDto? {
-        val parentTodo = toDoRepository.findById(parentId).orElse(null)
-        return if (parentTodo != null) {
-            val categories = toDoCategoryService.processCategories(toDoDto.categories ?: emptyList())
-            val subtaskEntity = mapper.toEntity(toDoDto, categories)
-            val savedSubtask = toDoRepository.save(subtaskEntity)
-
-            // Update the parent td to include the new subtask
-            val updatedParent = parentTodo.copy(
-                subToDos = parentTodo.subToDos + savedSubtask
-            )
-            toDoRepository.save(updatedParent)
-
-            mapper.toDto(savedSubtask)
-        } else {
-            null
+    private fun propagateStateUp(todo: ToDo) {
+        val parent = todo.parent ?: return
+        val siblings = toDoRepository.findByParentId(parent.id!!)
+        val allDone = siblings.all { it.state == State.DONE }
+        val anyInProgress = siblings.any { it.state == State.IN_PROGRESS }
+        if (allDone && parent.state != State.DONE) {
+            parent.state = State.DONE
+            parent.modified = LocalDateTime.now()
+            toDoRepository.save(parent)
+            propagateStateUp(parent)
+        } else if (anyInProgress && parent.state != State.IN_PROGRESS) {
+            parent.state = State.IN_PROGRESS
+            parent.modified = LocalDateTime.now()
+            toDoRepository.save(parent)
+            propagateStateUp(parent)
         }
     }
 }

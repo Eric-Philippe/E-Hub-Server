@@ -7,8 +7,5 @@ import java.util.*
 
 @Repository
 interface ToDoRepository : JpaRepository<ToDo, UUID> {
-
-    fun findByTitleContainingIgnoreCase(title: String): List<ToDo>
-
-    fun findByDescriptionContainingIgnoreCase(description: String): List<ToDo>
+    fun findByParentId(parentId: UUID): List<ToDo>
 }
