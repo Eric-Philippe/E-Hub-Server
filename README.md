@@ -1,6 +1,32 @@
 # EHub Server
 
-A Spring Boot 3.5.5 application built with Kotlin and Java 21, featuring JPA, PostgreSQL, Flyway migrations, and OpenAPI documentation.
+<p align="center">
+  <img src="res/logo.png" style="width: 100px;" alt="logo">
+</p>
+
+# E-Hub Mobile Application
+
+E-Hub is a project designed to create tools and services that simplify and improve my daily life.
+Its goals are twofold:
+
+1. To explore and experiment with a wide range of technologies, gaining hands-on experience and learning new skills.
+2. To make the platform accessible across multiple environments and devices:
+    - [x] [Web Server](https://github.com/Eric-Philippe/E-Hub-Server) - v1.0.0 released
+    - [x] [Grafana Dashboards](https://github.com/Eric-Philippe/E-Hub-Server/tree/main/grafana)
+    - [x] [Mobile application (Android)](https://github.com/Eric-Philippe/E-Hub-Mobile) - v1.0.0 released
+    - [ ] Samsung Tizen application (Next)
+    - [ ] Desktop application
+        - [ ] MacOS
+        - [ ] Windows
+        - [ ] Linux
+    - [ ] Android TV application
+    - [ ] Receipt printer
+
+---
+
+This repository contains the spring Boot API built with Kotlin and Java 21, featuring JPA, PostgreSQL, Flyway migrations, and OpenAPI documentation.
+
+![EHub OpenAPI](res/openapi.png)
 
 ## Technologies Used
 
